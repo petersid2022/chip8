@@ -16,7 +16,7 @@ To run the emulator, make sure you have Go installed on your system. Then, follo
 
 ## Resources
 
-If you're interested in learning more about the Chip-8 system or want to explore additional features for your emulator, check out the following resources:
+If you're interested in learning more about the Chip-8 system check out the following resources:
 
 * [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM): A comprehensive guide to the Chip-8 system.
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
