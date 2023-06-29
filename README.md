@@ -9,8 +9,8 @@ This is a simple Chip-8 emulator written in Go. The Chip-8 is an interpreted pro
 
 To run the emulator, make sure you have Go installed on your system. Then, follow these steps:
 
-1. Clone this repository: ```git clone https://github.com/petersid2022/CHIP-8-emulator.git```
-2. Navigate to the project directory: ```cd CHIP8-emulator```
+1. Clone this repository: ```git clone https://github.com/petersid2022/chip8.git```
+2. Navigate to the project directory: ```cd chip8```
 3. Build the project: ```go build .```
 4. Run the emulator: ```./main```
 
@@ -22,4 +22,3 @@ If you're interested in learning more about the Chip-8 system or want to explore
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
 * [Guide to making a CHIP-8 emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
 * [How to write an emulator (CHIP-8 interpreter)](http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
-
