@@ -3,6 +3,8 @@ package chip8
 import (
 	"fmt"
 	"math/rand"
+	"os"
+    "bufio"
 )
 
 var fontSet = []uint8{
@@ -109,9 +111,9 @@ func (cpu *CPU) Init() {
 	cpu.st = 0
 }
 
-func (cpu *CPU) emulateCycle() {
+func (cpu *CPU) EmulateCycle() {
 	// Emulation cycle: Fetch -> Decode -> Execute
-	// Every cycle, the method emulateCycle is called which emulates one cycle of the Chip 8 CPU.
+	// Every cycle, the method EmulateCycle is called which emulates one cycle of the Chip 8 CPU.
 	// During this cycle, the emulator will Fetch, Decode and Execute one opcode.
 
 	// Fetch opcode
@@ -211,6 +213,13 @@ func (cpu *CPU) emulateCycle() {
 			cpu.pc = cpu.pc + 2 // Because every instruction is 2 bytes long
 
 		case 0x0005: // 8XY5: VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there is not.
+			if cpu.V[(cpu.opcode&0x00F0)>>4] > cpu.V[(cpu.opcode&0x0F00)>>8] {
+				cpu.V[0xF] = 0 // There is a borrow
+			} else {
+				cpu.V[0xF] = 1 // No borrow
+			}
+			cpu.V[(cpu.opcode&0x0F00)>>8] = cpu.V[(cpu.opcode&0x0F00)>>8] - cpu.V[(cpu.opcode&0x00F0)>>4]
+			cpu.pc = cpu.pc + 2 // Because every instruction is 2 bytes long
 
 		case 0x0006: // 8XY6: Sets Vx to the value of Vy
 
@@ -220,6 +229,13 @@ func (cpu *CPU) emulateCycle() {
 
 		default:
 			fmt.Printf("Unknown opcode [0x8000]: 0x%X\n", cpu.opcode)
+		}
+
+	case 0x9000: // 9XY0: Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block);
+		if cpu.V[(cpu.opcode&0x0F00)>>8] != cpu.V[(cpu.opcode&0x00F0)>>4] {
+			cpu.pc = cpu.pc + 4 // Skip the next instruction
+		} else {
+			cpu.pc = cpu.pc + 2 // Go to the rightmost instruction
 		}
 
 	case 0xA000: // ANNN: Sets I to the address NNN
@@ -295,4 +311,29 @@ func (cpu *CPU) emulateCycle() {
 			cpu.st = cpu.st - 1
 		}
 	}
+}
+
+func (cpu *CPU) LoadRom(filename string) {
+    file, err := os.Open(filename)
+
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+
+    stats, statsErr := file.Stat()
+    if statsErr != nil {
+        panic(statsErr)
+    }
+
+    var size int64 = stats.Size()
+    bytes := make([]byte, size)
+
+    bufr := bufio.NewReader(file)
+    _,err = bufr.Read(bytes)
+
+    fmt.Println(bytes)
+    //for i:=0;i<=len(bytes);i++ {
+    //    cpu.memory[i+512] = bytes[i]
+    //}
 }
