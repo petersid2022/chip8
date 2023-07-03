@@ -20,5 +20,4 @@ If you're interested in learning more about the Chip-8 system check out the foll
 
 * [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM): A comprehensive guide to the Chip-8 system.
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
-* [Guide to making a CHIP-8 emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
 * [How to write an emulator (CHIP-8 interpreter)](http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
