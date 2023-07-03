@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-    "bufio"
 )
 
 var fontSet = []uint8{
@@ -52,7 +51,7 @@ type CPU struct {
 
 	// Graphics:
 	// The graphics of the Chip 8 are black and white and the screen has a total of 2048 pixels (64 x 32).
-	display [64][32]uint8
+	display [32][64]uint8
 
 	// The stack pointer (SP) can be 8-bit, it is used to point to the topmost level of the stack.
 	sp uint8
@@ -63,6 +62,8 @@ type CPU struct {
 
 	// The computers which originally used the Chip-8 Language had a 16-key hexadecimal keypad
 	keypad [16]uint8
+
+	drawFlag bool
 }
 
 func (cpu *CPU) Init() {
@@ -80,8 +81,8 @@ func (cpu *CPU) Init() {
 	cpu.I = 0
 
 	// Clear Display
-	for i := 0; i < 64; i++ {
-		for j := 0; j < 32; j++ {
+	for i := 0; i < 32; i++ {
+		for j := 0; j < 64; j++ {
 			cpu.display[i][j] = 0
 		}
 	}
@@ -221,14 +222,24 @@ func (cpu *CPU) EmulateCycle() {
 			cpu.V[(cpu.opcode&0x0F00)>>8] = cpu.V[(cpu.opcode&0x0F00)>>8] - cpu.V[(cpu.opcode&0x00F0)>>4]
 			cpu.pc = cpu.pc + 2 // Because every instruction is 2 bytes long
 
-		case 0x0006: // 8XY6: Sets Vx to the value of Vy
-
-		case 0x0007: // 8XY7: Sets Vx to the value of Vy
-
-		case 0x000E: // 8XYE: Sets Vx to the value of Vy
-
+		case 0x0006: // 0x8XY6 Shifts VY right by one and stores the result to VX (VY remains unchanged). VF is set to the value of the least significant bit of VY before the shift
+			cpu.V[0xF] = cpu.V[(cpu.opcode&0x0F00)>>8] & 0x1
+			cpu.V[(cpu.opcode&0x0F00)>>8] = cpu.V[(cpu.opcode&0x0F00)>>8] >> 1
+			cpu.pc = cpu.pc + 2
+		case 0x0007: // 0x8XY7 Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't
+			if cpu.V[(cpu.opcode&0x0F00)>>8] > cpu.V[(cpu.opcode&0x00F0)>>4] {
+				cpu.V[0xF] = 0
+			} else {
+				cpu.V[0xF] = 1
+			}
+			cpu.V[(cpu.opcode&0x0F00)>>8] = cpu.V[(cpu.opcode&0x00F0)>>4] - cpu.V[(cpu.opcode&0x0F00)>>8]
+			cpu.pc = cpu.pc + 2
+		case 0x000E: // 0x8XYE Shifts VY left by one and copies the result to VX. VF is set to the value of the most significant bit of VY before the shift
+			cpu.V[0xF] = cpu.V[(cpu.opcode&0x0F00)>>8] >> 7
+			cpu.V[(cpu.opcode&0x0F00)>>8] = cpu.V[(cpu.opcode&0x0F00)>>8] << 1
+			cpu.pc = cpu.pc + 2
 		default:
-			fmt.Printf("Unknown opcode [0x8000]: 0x%X\n", cpu.opcode)
+			fmt.Printf("Invalid opcode %X\n", cpu.opcode)
 		}
 
 	case 0x9000: // 9XY0: Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block);
@@ -249,6 +260,49 @@ func (cpu *CPU) EmulateCycle() {
 		cpu.V[(cpu.opcode&0x0F00)>>8] = uint8(rand.Intn(256)) & uint8((cpu.opcode & 0x00FF))
 		cpu.pc = cpu.pc + 2
 
+	case 0xD000: // DXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels.
+		x := cpu.V[(cpu.opcode&0x0F00)>>8]
+		y := cpu.V[(cpu.opcode&0x00F0)>>4]
+		height := cpu.V[(cpu.opcode & 0x000F)]
+		var pixel uint8
+		var xline uint16
+		var yline uint16
+
+		cpu.V[0xF] = 0
+		for yline = 0; yline < uint16(height); yline++ {
+			pixel = cpu.memory[cpu.I+yline]
+			for xline = 0; xline < 8; xline++ {
+				if (pixel & (0x80 >> xline)) != 0 {
+					if (pixel & (0x80 >> xline)) != 0 {
+						if cpu.display[(y + uint8(yline))][x+uint8(xline)] == 1 {
+							cpu.V[0xF] = 1
+						}
+						cpu.display[(y + uint8(yline))][x+uint8(xline)] ^= 1
+					}
+				}
+			}
+		}
+		cpu.drawFlag = true
+		cpu.pc = cpu.pc + 2
+
+	case 0xE000:
+		switch cpu.opcode & 0x00FF {
+		case 0x009E: // 0xEX9E Skips the next instruction if the key stored in VX is pressed
+			if cpu.keypad[cpu.V[(cpu.opcode&0x0F00)>>8]] != 0 {
+				cpu.pc = cpu.pc + 4
+			} else {
+				cpu.pc = cpu.pc + 2
+			}
+		case 0x00A1: // 0xEXA1 Skips the next instruction if the key stored in VX isn't pressed
+			if cpu.keypad[cpu.V[(cpu.opcode&0x0F00)>>8]] == 0 {
+				cpu.pc = cpu.pc + 4
+			} else {
+				cpu.pc = cpu.pc + 2
+			}
+		default:
+			fmt.Printf("Invalid opcode %X\n", cpu.opcode)
+		}
+
 	case 0xF000:
 		switch cpu.opcode & 0x00FF { // 0x000F is 0000 0000 0000 1111
 
@@ -257,6 +311,17 @@ func (cpu *CPU) EmulateCycle() {
 			cpu.pc = cpu.pc + 2
 
 		case 0x000A: // FX0A: A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event).
+			pressed := false
+			for i := 0; i < len(cpu.keypad); i++ {
+				if cpu.keypad[i] != 0 {
+					cpu.V[(cpu.opcode&0x0F00)>>8] = uint8(i)
+					pressed = true
+				}
+			}
+			if !pressed {
+				return
+			}
+			cpu.pc = cpu.pc + 2
 
 		case 0x0015: // FX15: Sets the delay timer to VX.
 			cpu.dt = cpu.V[(cpu.opcode&0x0F00)>>8]
@@ -271,6 +336,8 @@ func (cpu *CPU) EmulateCycle() {
 			cpu.pc = cpu.pc + 2
 
 		case 0x0029: // FX29: Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+			cpu.I = uint16(cpu.V[(cpu.opcode&0x0F00)>>8]) * 0x5
+			cpu.pc = cpu.pc + 2
 
 		case 0x0033: // FX33: Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
 			cpu.memory[cpu.I] = cpu.V[(cpu.opcode&0x0F00)>>8] / 100
@@ -314,26 +381,15 @@ func (cpu *CPU) EmulateCycle() {
 }
 
 func (cpu *CPU) LoadRom(filename string) {
-    file, err := os.Open(filename)
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
 
-    if err != nil {
-        panic(err)
-    }
-    defer file.Close()
+	// Load the ROM into memory
+	for i := 0; i < len(data); i++ {
+		cpu.memory[i+512] = data[i]
+	}
 
-    stats, statsErr := file.Stat()
-    if statsErr != nil {
-        panic(statsErr)
-    }
-
-    var size int64 = stats.Size()
-    bytes := make([]byte, size)
-
-    bufr := bufio.NewReader(file)
-    _,err = bufr.Read(bytes)
-
-    fmt.Println(bytes)
-    //for i:=0;i<=len(bytes);i++ {
-    //    cpu.memory[i+512] = bytes[i]
-    //}
+	fmt.Println("ROM loaded successfully")
 }
