@@ -18,7 +18,6 @@ To run the emulator, make sure you have Go installed on your system. Then, follo
 
 If you're interested in learning more about the Chip-8 system check out the following resources:
 
-* [Awesome CHIP-8](https://chip-8.github.io/links/)
 * [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM): A comprehensive guide to the Chip-8 system.
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
 * [Guide to making a CHIP-8 emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
