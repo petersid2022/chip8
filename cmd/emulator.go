@@ -186,6 +186,8 @@ func (cpu *CPU) EmulateCycle() {
 		cpu.V[(cpu.Opcode&0x0F00)>>8] += uint8(cpu.Opcode & 0x00FF)
 		cpu.Pc = cpu.Pc + 2
 
+    // Chip-8 ALU (arithmetic logic unit)
+    // Performs arithmetic and bitwise operations.
 	case 0x8000:
 		switch cpu.Opcode & 0x000F { // 0x000F is 0000 0000 0000 1111
 		case 0x0000: // 8XY0: Sets Vx to the value of Vy
