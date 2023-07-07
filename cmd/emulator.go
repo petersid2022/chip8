@@ -395,3 +395,20 @@ func (cpu *CPU) LoadRom(filename string) {
 
 	fmt.Println("ROM loaded successfully")
 }
+
+func (cpu *CPU) setKeys(keyStates [16]bool) {
+  // Chip-8 keypad layout
+  // 1 2 3 C
+  // 4 5 6 D
+  // 7 8 9 E
+  // A 0 B F
+
+  // Update the key states in the Chip-8 system
+  for i := 0; i < 16; i++ {
+    if keyStates[i] {
+      cpu.Keypad[i] = 1 // Set the key state to pressed (1)
+    } else {
+      cpu.Keypad[i] = 0 // Set the key state to released (0)
+    }
+  }
+}
