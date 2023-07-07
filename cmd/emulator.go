@@ -67,6 +67,9 @@ type CPU struct {
 }
 
 func (cpu *CPU) Init() {
+    // DrawFlag
+    cpu.DrawFlag = true
+
 	// Program counter starts at 0x200 (512)
 	Pc := 0x200
 	cpu.Pc = uint16(Pc)
@@ -126,7 +129,7 @@ func (cpu *CPU) EmulateCycle() {
 	// Finally, the two results are combined using bitwise OR to form the 16-bit Opcode value.
 	// cpu.Opcode = uint16(cpu.Memory[cpu.pc]&0xF0) | uint16(cpu.Memory[cpu.pc+1]&0x0F)
 	// Or, you can simply shift left the cpu.Memory address and then perform an OR operation with the new addr.
-	cpu.Opcode = (uint16(cpu.Memory[cpu.Pc]) << 8) | uint16(cpu.Memory[cpu.Pc +1])
+	cpu.Opcode = (uint16(cpu.Memory[cpu.Pc]) << 8) | uint16(cpu.Memory[cpu.Pc+1])
 
 	// Decode Opcode
 	// As we have stored our current Opcode, we need to decode the Opcode and
@@ -135,9 +138,9 @@ func (cpu *CPU) EmulateCycle() {
 	case 0x0000:
 		switch cpu.Opcode & 0x000F { // 0x000F is 0000 0000 0000 1111
 		case 0x0000: // 0x00E0: Clears the screen
-			for i := 0; i < 64; i++ {
-				for j := 0; j < 32; j++ {
-					cpu.Display[i][j] = 0x0
+			for i := 0; i < 32; i++ {
+				for j := 0; j < 64; j++ {
+					cpu.Display[i][j] = 0
 				}
 			}
 			cpu.Pc = cpu.Pc + 2
@@ -153,7 +156,7 @@ func (cpu *CPU) EmulateCycle() {
 		cpu.Pc = cpu.Opcode & 0x0FFF
 
 	case 0x2000: // 2NNN: Calls subroutine at NNN.
-		cpu.Stack[cpu.Pc] = cpu.Pc
+		cpu.Stack[cpu.Stack_pointer] = cpu.Pc
 		cpu.Stack_pointer = cpu.Stack_pointer + 1
 		cpu.Pc = cpu.Opcode & 0x0FFF
 
@@ -186,12 +189,12 @@ func (cpu *CPU) EmulateCycle() {
 		cpu.V[(cpu.Opcode&0x0F00)>>8] += uint8(cpu.Opcode & 0x00FF)
 		cpu.Pc = cpu.Pc + 2
 
-    // Chip-8 ALU (arithmetic logic unit)
-    // Performs arithmetic and bitwise operations.
+		// Chip-8 ALU (arithmetic logic unit)
+		// Performs arithmetic and bitwise operations.
 	case 0x8000:
 		switch cpu.Opcode & 0x000F { // 0x000F is 0000 0000 0000 1111
 		case 0x0000: // 8XY0: Sets Vx to the value of Vy
-			cpu.V[(cpu.Opcode&0x0F00)>>4] = cpu.V[(cpu.Opcode & 0x00F0)]
+			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode & 0x00F0)>>4]
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0001: // 8XY1: Sets VX to VX or VY. (bitwise OR operation)
@@ -262,25 +265,21 @@ func (cpu *CPU) EmulateCycle() {
 		cpu.V[(cpu.Opcode&0x0F00)>>8] = uint8(rand.Intn(256)) & uint8((cpu.Opcode & 0x00FF))
 		cpu.Pc = cpu.Pc + 2
 
-	case 0xD000: // DXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels.
+	case 0xD000: // 0xDXYN Draws a sprite at coordinate (VX, VY)
 		x := cpu.V[(cpu.Opcode&0x0F00)>>8]
 		y := cpu.V[(cpu.Opcode&0x00F0)>>4]
-		height := cpu.V[(cpu.Opcode & 0x000F)]
-		var pixel uint8
-		var xline uint16
-		var yline uint16
-
+		h := cpu.Opcode& 0x000F
 		cpu.V[0xF] = 0
-		for yline = 0; yline < uint16(height); yline++ {
-			pixel = cpu.Memory[cpu.I+yline]
-			for xline = 0; xline < 8; xline++ {
-				if (pixel & (0x80 >> xline)) != 0 {
-					if (pixel & (0x80 >> xline)) != 0 {
-						if cpu.Display[(y + uint8(yline))][x+uint8(xline)] == 1 {
-							cpu.V[0xF] = 1
-						}
-						cpu.Display[(y + uint8(yline))][x+uint8(xline)] ^= 1
+		var j uint16 = 0
+		var i uint16 = 0
+		for j = 0; j < h; j++ {
+			pixel := cpu.Memory[cpu.I+j]
+			for i = 0; i < 8; i++ {
+				if (pixel & (0x80 >> i)) != 0 {
+					if cpu.Display[(y + uint8(j))][x+uint8(i)] == 1 {
+						cpu.V[0xF] = 1
 					}
+					cpu.Display[(y + uint8(j))][x+uint8(i)] ^= 1
 				}
 			}
 		}
@@ -396,19 +395,29 @@ func (cpu *CPU) LoadRom(filename string) {
 	fmt.Println("ROM loaded successfully")
 }
 
-func (cpu *CPU) SetKeys(keyStates [16]bool) {
-  // Chip-8 keypad layout
-  // 1 2 3 C
-  // 4 5 6 D
-  // 7 8 9 E
-  // A 0 B F
+func (cpu *CPU) Draw() bool{
+    d := cpu.DrawFlag
+    cpu.DrawFlag = false
+    return d
+}
 
-  // Update the key states in the Chip-8 system
-  for i := 0; i < 16; i++ {
-    if keyStates[i] {
-      cpu.Keypad[i] = 1 // Set the key state to pressed (1)
-    } else {
-      cpu.Keypad[i] = 0 // Set the key state to released (0)
-    }
-  }
+func (cpu *CPU) Buffer() [32][64]uint8 {
+	return cpu.Display
+}
+
+func (cpu *CPU) SetKeys(keyStates [16]bool) {
+	// Chip-8 keypad layout
+	// 1 2 3 C
+	// 4 5 6 D
+	// 7 8 9 E
+	// A 0 B F
+
+	// Update the key states in the Chip-8 system
+	for i := 0; i < 16; i++ {
+		if keyStates[i] {
+			cpu.Keypad[i] = 1 // Set the key state to pressed (1)
+		} else {
+			cpu.Keypad[i] = 0 // Set the key state to released (0)
+		}
+	}
 }
