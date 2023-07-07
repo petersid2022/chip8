@@ -67,8 +67,8 @@ type CPU struct {
 }
 
 func (cpu *CPU) Init() {
-    // DrawFlag
-    cpu.DrawFlag = true
+	// DrawFlag
+	cpu.DrawFlag = true
 
 	// Program counter starts at 0x200 (512)
 	Pc := 0x200
@@ -194,7 +194,7 @@ func (cpu *CPU) EmulateCycle() {
 	case 0x8000:
 		switch cpu.Opcode & 0x000F { // 0x000F is 0000 0000 0000 1111
 		case 0x0000: // 8XY0: Sets Vx to the value of Vy
-			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode & 0x00F0)>>4]
+			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode&0x00F0)>>4]
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0001: // 8XY1: Sets VX to VX or VY. (bitwise OR operation)
@@ -202,11 +202,11 @@ func (cpu *CPU) EmulateCycle() {
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0002: // 8XY2: Sets VX to VX and VY. (bitwise AND operation)
-			cpu.V[(cpu.Opcode&0x0F00)>>4] = cpu.V[(cpu.Opcode&0x0F00)>>4] & cpu.V[(cpu.Opcode&0x00F0)]
+			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode&0x0F00)>>8] & cpu.V[(cpu.Opcode&0x00F0>>4)]
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0003: // 8XY3: Sets VX to VX xor VY. (bitwise XOR operation)
-			cpu.V[(cpu.Opcode&0x0F00)>>4] = cpu.V[(cpu.Opcode&0x0F00)>>4] ^ cpu.V[(cpu.Opcode&0x00F0)]
+			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode&0x0F00)>>8] ^ cpu.V[(cpu.Opcode&0x00F0)>>4]
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0004: // 8XY4: Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there is not.
@@ -268,18 +268,20 @@ func (cpu *CPU) EmulateCycle() {
 	case 0xD000: // 0xDXYN Draws a sprite at coordinate (VX, VY)
 		x := cpu.V[(cpu.Opcode&0x0F00)>>8]
 		y := cpu.V[(cpu.Opcode&0x00F0)>>4]
-		h := cpu.Opcode& 0x000F
+		h := cpu.Opcode & 0x000F
 		cpu.V[0xF] = 0
-		var j uint16 = 0
-		var i uint16 = 0
+		var j uint16
+		var i uint16
 		for j = 0; j < h; j++ {
 			pixel := cpu.Memory[cpu.I+j]
 			for i = 0; i < 8; i++ {
 				if (pixel & (0x80 >> i)) != 0 {
-					if cpu.Display[(y + uint8(j))][x+uint8(i)] == 1 {
-						cpu.V[0xF] = 1
+					if int(y+uint8(j)) < len(cpu.Display) && int(x+uint8(i)) < len(cpu.Display[0]) {
+						if cpu.Display[y+uint8(j)][x+uint8(i)] == 1 {
+							cpu.V[0xF] = 1
+						}
+						cpu.Display[y+uint8(j)][x+uint8(i)] ^= 1
 					}
-					cpu.Display[(y + uint8(j))][x+uint8(i)] ^= 1
 				}
 			}
 		}
@@ -393,16 +395,6 @@ func (cpu *CPU) LoadRom(filename string) {
 	}
 
 	fmt.Println("ROM loaded successfully")
-}
-
-func (cpu *CPU) Draw() bool{
-    d := cpu.DrawFlag
-    cpu.DrawFlag = false
-    return d
-}
-
-func (cpu *CPU) Buffer() [32][64]uint8 {
-	return cpu.Display
 }
 
 func (cpu *CPU) SetKeys(keyStates [16]bool) {
