@@ -396,7 +396,7 @@ func (cpu *CPU) LoadRom(filename string) {
 	fmt.Println("ROM loaded successfully")
 }
 
-func (cpu *CPU) setKeys(keyStates [16]bool) {
+func (cpu *CPU) SetKeys(keyStates [16]bool) {
   // Chip-8 keypad layout
   // 1 2 3 C
   // 4 5 6 D
