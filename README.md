@@ -12,7 +12,7 @@ To run the emulator, make sure you have Go installed on your system. Then, follo
 1. Clone this repository: ```git clone https://github.com/petersid2022/chip8.git```
 2. Navigate to the project directory: ```cd chip8```
 3. Build the project: ```go build```
-4. Run the emulator: ```./chip8```
+4. Run the emulator: ```./chip8 [path to rom]```
 
 ## Key Bindings
 
@@ -32,6 +32,7 @@ If you're interested in learning more about the Chip-8 system check out the foll
 * [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM): A comprehensive guide to the Chip-8 system.
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
 * [How to write an emulator (CHIP-8 interpreter)](http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
+* [Chip 8 Games](https://johnearnest.github.io/chip8Archive/)
 
 ## TODO
 
