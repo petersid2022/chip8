@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+    "path"
 
 	"github.com/petersid2022/chip8/cmd"
 	sdl "github.com/veandco/go-sdl2/sdl"
@@ -55,7 +56,8 @@ func run() int {
 	chip8 := chip8.CPU{}
 	chip8.Init()
     arg := os.Args[1]
-	chip8.LoadRom("/home/petrside/github/chip8/" + arg)
+    rom := path.Base(arg)
+	chip8.LoadRom("/home/petrside/github/chip8/roms/" + rom)
 
 	var window *sdl.Window
 	var renderer *sdl.Renderer
