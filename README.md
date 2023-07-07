@@ -12,7 +12,7 @@ To run the emulator, make sure you have Go installed on your system. Then, follo
 1. Clone this repository: ```git clone https://github.com/petersid2022/chip8.git```
 2. Navigate to the project directory: ```cd chip8```
 3. Build the project: ```go build```
-4. Run the emulator: ```./main```
+4. Run the emulator: ```./chip8```
 
 ## Key Bindings
 
