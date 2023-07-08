@@ -2,15 +2,24 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
-    "path"
 
 	"github.com/petersid2022/chip8/cmd"
 	sdl "github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
-var winTitle string = "SDL2 GFX"
+var winTitle string = "CHIP8 emulator"
 var winWidth, winHeight int32 = 800, 600
+
+var fontPath = "./font.ttf"
+var fontSize = 24
+
+type MenuItem struct {
+	Text   string
+	Bounds sdl.Rect
+}
 
 func mapKey(sdlKey sdl.Keycode) int {
 	switch sdlKey {
@@ -51,14 +60,148 @@ func mapKey(sdlKey sdl.Keycode) int {
 	}
 }
 
-func run() int {
-	// Initialize the Chip8 system and load the game into the memory
-	chip8 := chip8.CPU{}
-	chip8.Init()
-    arg := os.Args[1]
-    rom := path.Base(arg)
-	chip8.LoadRom("/home/petrside/github/chip8/roms/" + rom)
+func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
+	files, err := ioutil.ReadDir("./roms/")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read ROM directory: %s\n", err)
+		return ""
+	}
 
+	menuItems := make([]MenuItem, len(files))
+	lineHeight := fontSize + 10
+
+	const itemsPerColumn = 10
+	columnWidth := winWidth / 4
+	//columnSpacing := columnWidth / 8
+	numColumns := (len(files) + itemsPerColumn - 1) / itemsPerColumn
+	columnSpacing := (winWidth - int32(numColumns)*columnWidth) / (int32(numColumns) + 1)
+
+	for i, file := range files {
+		columnIndex := i / itemsPerColumn
+		itemIndex := i % itemsPerColumn
+
+		itemText := fmt.Sprintf("%d. %s", i+1, file.Name())
+		itemRect := sdl.Rect{
+			X: (int32(columnIndex) * (columnWidth + columnSpacing)) + columnSpacing,
+			Y: 96 + (int32(lineHeight) * int32(itemIndex)),
+			W: columnWidth,
+			H: int32(lineHeight),
+		}
+		menuItems[i] = MenuItem{Text: itemText, Bounds: itemRect}
+	}
+
+	for {
+		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+			switch t := event.(type) {
+			case *sdl.QuitEvent:
+				return ""
+				//case *sdl.KeyboardEvent:
+				//	if t.Type == sdl.KEYDOWN {
+				//		chip8Key := mapKey(t.Keysym.Sym)
+				//		if chip8Key != -1 {
+				//			itemIndex := chip8Key - 1
+				//			if itemIndex >= 0 && itemIndex < len(menuItems) {
+				//				return files[itemIndex].Name()
+				//			}
+				//		}
+				//	}
+			case *sdl.MouseButtonEvent:
+				if t.Type == sdl.MOUSEBUTTONDOWN {
+					for i, item := range menuItems {
+						if t.X >= item.Bounds.X && t.X < item.Bounds.X+item.Bounds.W &&
+							t.Y >= item.Bounds.Y && t.Y < item.Bounds.Y+item.Bounds.H {
+							return files[i].Name()
+						}
+					}
+				}
+			}
+		}
+
+		renderer.SetDrawColor(0, 0, 0, 255)
+		renderer.Clear()
+
+		// Render "Select ROM to play" text
+		textSurface, err := font.RenderUTF8Solid("Click on a ROM to play", sdl.Color{R: 255, G: 255, B: 255, A: 255})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
+			return ""
+		}
+		defer textSurface.Free()
+
+		textTexture, err := renderer.CreateTextureFromSurface(textSurface)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create texture: %s\n", err)
+			return ""
+		}
+		defer textTexture.Destroy()
+
+		// Get the dimensions of the text texture
+		_, _, textWidth, textHeight, err := textTexture.Query()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
+			return ""
+		}
+
+		// Position the text at the center of the window
+		textX := (winWidth - 2*textWidth) / 2
+		textY := int32(8)
+
+		// Render the text
+		renderer.Copy(textTexture, nil, &sdl.Rect{X: textX, Y: textY, W: textWidth * 2, H: textHeight * 2})
+
+		creditsSurface, err := font.RenderUTF8Solid("(c) Peter Sideris 2023", sdl.Color{R: 255, G: 255, B: 255, A: 255})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
+			return ""
+		}
+		defer creditsSurface.Free()
+
+		creditsTexture, err := renderer.CreateTextureFromSurface(creditsSurface)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create texture: %s\n", err)
+			return ""
+		}
+		defer creditsTexture.Destroy()
+
+		// Get the dimensions of the text texture
+		_, _, creditsWidth, creditsHeight, err := creditsTexture.Query()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
+			return ""
+		}
+
+		// Position the text at the center of the window
+		creditsX := (winWidth - creditsWidth) / 2
+		creditsY := int32(winHeight - creditsHeight - 8)
+
+		// Render the text
+		renderer.Copy(creditsTexture, nil, &sdl.Rect{X: creditsX, Y: creditsY, W: creditsWidth, H: creditsHeight})
+
+		// Render the menu items
+		for _, item := range menuItems {
+			itemSurface, err := font.RenderUTF8Solid(item.Text, sdl.Color{R: 255, G: 255, B: 255, A: 255})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
+				return ""
+			}
+			defer itemSurface.Free()
+
+			itemTexture, err := renderer.CreateTextureFromSurface(itemSurface)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create texture: %s\n", err)
+				return ""
+			}
+			defer itemTexture.Destroy()
+
+			renderer.Copy(itemTexture, nil, &item.Bounds)
+		}
+
+		renderer.Present()
+		sdl.Delay(16)
+	}
+}
+
+func run() int {
 	var window *sdl.Window
 	var renderer *sdl.Renderer
 	var err error
@@ -66,25 +209,49 @@ func run() int {
 	// Setting up graphics and creating a window
 	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize SDL: %s\n", err)
-		return 1
+		return 2
 	}
 	defer sdl.Quit()
 
 	if window, err = sdl.CreateWindow(winTitle, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, winWidth, winHeight, sdl.WINDOW_SHOWN); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create window: %s\n", err)
-		return 2
+		return 3
 	}
 	defer window.Destroy()
 
 	if renderer, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create renderer: %s\n", err)
-		return 3 // don't use os.Exit(3); otherwise, previous deferred calls will never run
+		return 4
 	}
 	renderer.Clear()
 	defer renderer.Destroy()
 
+	if err = ttf.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize TTF: %s\n", err)
+		return 4
+	}
+	defer ttf.Quit()
+
+	font, err := ttf.OpenFont(fontPath, fontSize)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open font: %s\n", err)
+		return 5
+	}
+	defer font.Close()
+
+	romName := showMenu(renderer, font)
+	if romName == "" {
+		return 0
+	}
+
+	// Initialize the Chip8 system and load the game into memory
+	chip8 := chip8.CPU{}
+	chip8.Init()
+	chip8.LoadRom("/home/petrside/github/chip8/roms/" + romName)
+
 	// Initialize the key states array
 	keyStates := &[16]bool{}
+
 	// Emulation loop
 	for {
 		// Handle keyboard events
