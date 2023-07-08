@@ -198,7 +198,7 @@ func (cpu *CPU) EmulateCycle() {
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0001: // 8XY1: Sets VX to VX or VY. (bitwise OR operation)
-			cpu.V[(cpu.Opcode&0x0F00)>>4] = cpu.V[(cpu.Opcode&0x0F00)>>4] | cpu.V[(cpu.Opcode&0x00F0)]
+			cpu.V[(cpu.Opcode&0x0F00)>>8] = cpu.V[(cpu.Opcode&0x0F00)>>8] | cpu.V[(cpu.Opcode&0x00F0)>>4]
 			cpu.Pc = cpu.Pc + 2
 
 		case 0x0002: // 8XY2: Sets VX to VX and VY. (bitwise AND operation)
