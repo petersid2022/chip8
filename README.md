@@ -42,7 +42,6 @@ If you're interested in learning more about how this emulator works, or about th
 ## TODO
 
 * Add Sound (Bleeper)
-* Add a config file, so the Rom folder can be altered by the user (i.e. when adding more games).
 * Add the [XO-CHIP](https://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html) extension, which includes:
     1. 7 new opcodes
     2. 16-bit addressing for a total of ~64kb RAM
