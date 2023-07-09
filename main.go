@@ -260,6 +260,20 @@ func run() int {
 			case *sdl.KeyboardEvent:
 				// Handle key down event
 				if t.Type == sdl.KEYDOWN {
+					// Restart the game if the "ESC" key is pressed 
+					if t.Keysym.Sym == sdl.K_ESCAPE {
+						// restart the game
+                        fmt.Println("Restarting")
+                        return 1
+					}
+
+					// Exit the game if the "Backspace" key is pressed 
+					if t.Keysym.Sym == sdl.K_BACKSPACE {
+						// restart the game
+                        fmt.Println("Exiting")
+                        return 0
+					}
+
 					// Map the keyboard key to the corresponding Chip8 keypad key
 					chip8Key := mapKey(t.Keysym.Sym)
 
@@ -276,6 +290,8 @@ func run() int {
 						(*keyStates)[chip8Key] = false
 					}
 				}
+                case *sdl.QuitEvent:
+                    return 0
 			}
 		}
 
@@ -307,6 +323,30 @@ func run() int {
 					})
 				}
 			}
+			footerSurface, err := font.RenderUTF8Solid("<Backspace> to quit, <ESC> to restart", sdl.Color{R: 255, G: 255, B: 255, A: 255})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
+			}
+			defer footerSurface.Free()
+
+			footerTexture, err := renderer.CreateTextureFromSurface(footerSurface)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create texture: %s\n", err)
+			}
+			defer footerTexture.Destroy()
+
+			// Get the dimensions of the text texture
+			_, _, footerWidth, footerHeight, err := footerTexture.Query()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
+			}
+
+			// Position the text at the center of the window
+			footerX := (winWidth - footerWidth) / 2
+			footerY := int32(winHeight - footerHeight - 4)
+
+			// Render the text
+			renderer.Copy(footerTexture, nil, &sdl.Rect{X: footerX, Y: footerY, W: footerWidth, H: footerHeight})
 
 			renderer.Present()
 
@@ -323,5 +363,11 @@ func run() int {
 }
 
 func main() {
-	os.Exit(run())
+    for {
+        returnValue := run()
+
+        if returnValue == 0 {
+            break
+        }
+    }
 }
