@@ -42,6 +42,7 @@ If you're interested in learning more about how this emulator works, or about th
 ## TODO
 
 * Add Sound (Bleeper)
+* Add the [Super Chip-48](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3.2) extended instructions.
 * Add the [XO-CHIP](https://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html) extension, which includes:
     1. 7 new opcodes
     2. 16-bit addressing for a total of ~64kb RAM
