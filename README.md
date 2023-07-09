@@ -24,8 +24,8 @@ A | 0 | B | F        Z | X | C | V
 ```
 
 ```
-<Backspace> to quit
-<Escape> to restart
+<Escape> to quit
+<Backspace> to restart
 ```
 
 
