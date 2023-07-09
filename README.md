@@ -1,9 +1,8 @@
 # Chip-8 Emulator in Go
+![peek](https://github.com/petersid2022/chip8/assets/49149872/1d05daca-fc79-489e-a888-388f961c24ab)
 
 According to Wikipedia:
 > CHIP-8 is an interpreted programming language, developed by Joseph Weisbecker made on his 1802 Microprocessor. It was initially used on the COSMAC VIP and Telmac 1800 8-bit microcomputers in the mid-1970s.
-
-This is a simple Chip-8 emulator written in Go. The Chip-8 is an interpreted programming language used in many early computer systems and video game consoles.
 
 ## Installation
 
@@ -12,7 +11,7 @@ To run the emulator, make sure you have Go installed on your system. Then, follo
 1. Clone this repository: ```git clone https://github.com/petersid2022/chip8.git```
 2. Navigate to the project directory: ```cd chip8```
 3. Build the project: ```go build```
-4. Run the emulator: ```./chip8 [path to rom]```
+4. Run the emulator: ```./chip8```
 
 ## Key Bindings
 
@@ -27,15 +26,18 @@ A | 0 | B | F        Z | X | C | V
 
 ## Resources
 
-If you're interested in learning more about the Chip-8 system check out the following resources:
+If you're interested in learning more about how this emulator works, or about the Chip-8 system in general check out the following resources:
 
 * [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM): A comprehensive guide to the Chip-8 system.
 * [Chip-8 Wikipedia page](https://en.wikipedia.org/wiki/CHIP-8): General information about the Chip-8 system.
 * [How to write an emulator (CHIP-8 interpreter)](http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
 * [Chip 8 Games](https://johnearnest.github.io/chip8Archive/)
+* [go-sdl2](https://github.com/veandco/go-sdl2): The Graphics library used to render the emulator.
 
 ## TODO
 
+* Add Sound (Bleeper)
+* Add a config file, so the Rom folder can be altered by the user (i.e. when adding more games).
 * Add the [XO-CHIP](https://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html) extension, which includes:
     1. 7 new opcodes
     2. 16-bit addressing for a total of ~64kb RAM
