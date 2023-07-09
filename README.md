@@ -23,6 +23,11 @@ Chip8 keypad         Keyboard mapping
 A | 0 | B | F        Z | X | C | V
 ```
 
+```
+<Backspace> to quit
+<Escape> to restart
+```
+
 
 ## Resources
 
