@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/petersid2022/chip8/cmd"
@@ -10,13 +9,17 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-var winTitle string = "CHIP8 emulator"
-var winWidth, winHeight int32 = 800, 600
-var delay uint32 = 100
-var target_fps uint32 = 60
+var (
+	winTitle            string = "CHIP8 emulator"
+	winWidth, winHeight int32  = 800, 600
+	delay               uint32 = 100
+	target_fps          uint32 = 60
+)
 
-var fontPath = "./font.ttf"
-var fontSize = 24
+var (
+	fontPath = "./font.ttf"
+	fontSize = 24
+)
 
 type MenuItem struct {
 	Text   string
@@ -63,7 +66,7 @@ func mapKey(sdlKey sdl.Keycode) int {
 }
 
 func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
-	files, err := ioutil.ReadDir("./roms/")
+	files, err := os.ReadDir("./roms/")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read ROM directory: %s\n", err)
 		return ""
@@ -114,31 +117,31 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 						return ""
 					}
 					if t.Keysym.Sym == sdl.K_i {
-                        // increment by -5 target_fps
-                        // until target_fps is 0
-                        if target_fps > 0 {
-                            target_fps -= 5
-                        }
+						// increment by -5 target_fps
+						// until target_fps is 0
+						if target_fps > 0 {
+							target_fps -= 5
+						}
 					}
 					if t.Keysym.Sym == sdl.K_p {
-                        // increment by +5 target_fps
-                        if target_fps < 100 {
-                            target_fps += 5
-                        }
+						// increment by +5 target_fps
+						if target_fps < 100 {
+							target_fps += 5
+						}
 					}
 					if t.Keysym.Sym == sdl.K_j {
-                        // increment by -100 delay 
-                        // if delay is 100 do nothing
-                        if delay > 100 {
-                            delay -= 100
-                        }
+						// increment by -100 delay
+						// if delay is 100 do nothing
+						if delay > 100 {
+							delay -= 100
+						}
 					}
 					if t.Keysym.Sym == sdl.K_l {
-                        // increment by +100 delay 
-                        // if delay is 1000 do nothing
-                        if delay < 1000 {
-                            delay += 100
-                        }
+						// increment by +100 delay
+						// if delay is 1000 do nothing
+						if delay < 1000 {
+							delay += 100
+						}
 					}
 				}
 
@@ -185,7 +188,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 		// -----------------------------
 		// -----------------------------
 
-        delaySurface, err := font.RenderUTF8Solid(fmt.Sprintf("delay: %d (j: -100, l: +100)", delay), sdl.Color{R: 255, G: 255, B: 255, A: 255})
+		delaySurface, err := font.RenderUTF8Solid(fmt.Sprintf("delay: %d (j: -100, l: +100)", delay), sdl.Color{R: 255, G: 255, B: 255, A: 255})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
 			return ""
@@ -202,7 +205,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 			fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
 			return ""
 		}
-		//delayX := (winWidth - delayWidth) / 8
+		// delayX := (winWidth - delayWidth) / 8
 		delayY := int32(winHeight - delayHeight - 8)
 		renderer.Copy(delayTexture, nil, &sdl.Rect{X: columnSpacing, Y: delayY, W: delayWidth, H: delayHeight})
 
@@ -214,7 +217,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 		// -----------------------------
 		// -----------------------------
 
-        target_fpsSurface, err := font.RenderUTF8Solid(fmt.Sprintf("target_fps: %d (i: -5, p: +5)", target_fps), sdl.Color{R: 255, G: 255, B: 255, A: 255})
+		target_fpsSurface, err := font.RenderUTF8Solid(fmt.Sprintf("target_fps: %d (i: -5, p: +5)", target_fps), sdl.Color{R: 255, G: 255, B: 255, A: 255})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
 			return ""
@@ -231,7 +234,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 			fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
 			return ""
 		}
-		//target_fpsX := (winWidth - target_fpsWidth) / 8
+		// target_fpsX := (winWidth - target_fpsWidth) / 8
 		target_fpsY := int32(winHeight - target_fpsHeight - 8 - delayHeight - 8)
 		renderer.Copy(target_fpsTexture, nil, &sdl.Rect{X: columnSpacing, Y: target_fpsY, W: target_fpsWidth, H: target_fpsHeight})
 
@@ -242,7 +245,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 		// -----------------------------
 		// -----------------------------
 		// -----------------------------
-        
+
 		creditsSurface, err := font.RenderUTF8Solid("(c) Peter Sideris 2023", sdl.Color{R: 255, G: 255, B: 255, A: 255})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to render text: %s\n", err)
@@ -260,7 +263,7 @@ func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
 			fmt.Fprintf(os.Stderr, "Failed to query texture: %s\n", err)
 			return ""
 		}
-		//creditsX := (winWidth - creditsWidth) / 2
+		// creditsX := (winWidth - creditsWidth) / 2
 		creditsX := (winWidth - columnSpacing - creditsWidth)
 		creditsY := int32(winHeight - delayHeight - 8)
 		renderer.Copy(creditsTexture, nil, &sdl.Rect{X: creditsX, Y: creditsY, W: creditsWidth, H: creditsHeight})
