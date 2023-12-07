@@ -374,7 +374,7 @@ func run() int {
 	// Initialize the Chip8 system and load the game into memory
 	chip8 := chip8.CPU{}
 	chip8.Init()
-	chip8.LoadRom("/home/petrside/github/chip8/roms/" + romName)
+	chip8.LoadRom("./roms/" + romName)
 
 	// Initialize the key states array
 	keyStates := &[16]bool{}
@@ -490,6 +490,7 @@ func run() int {
 }
 
 func main() {
+    os.Stdout = nil
 	for {
 		returnValue := run()
 
