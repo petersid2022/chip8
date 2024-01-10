@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"os"
 
@@ -16,10 +17,9 @@ var (
 	target_fps          uint32 = 60
 )
 
-var (
-	fontPath = "./font.ttf"
-	fontSize = 24
-)
+//go:embed font.ttf
+var contentfont embed.FS
+var fontSize = 24
 
 type MenuItem struct {
 	Text   string
@@ -65,8 +65,11 @@ func mapKey(sdlKey sdl.Keycode) int {
 	}
 }
 
+//go:embed roms
+var content embed.FS
+
 func showMenu(renderer *sdl.Renderer, font *ttf.Font) string {
-	files, err := os.ReadDir("./roms/")
+	files, err := content.ReadDir("roms")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read ROM directory: %s\n", err)
 		return ""
@@ -359,11 +362,24 @@ func run() int {
 	}
 	defer ttf.Quit()
 
-	font, err := ttf.OpenFont(fontPath, fontSize)
+	fontData, err := contentfont.ReadFile("font.ttf")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open font: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to read font file: %s\n", err)
 		return 5
 	}
+
+	rwops, err := sdl.RWFromMem(fontData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed on rwops: %s\n", err)
+		return 5
+	}
+
+	font, err := ttf.OpenFontRW(rwops, 1, fontSize)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open font from RWops: %s\n", err)
+		return 5
+	}
+
 	defer font.Close()
 
 	romName := showMenu(renderer, font)
@@ -490,7 +506,7 @@ func run() int {
 }
 
 func main() {
-    os.Stdout = nil
+	os.Stdout = nil
 	for {
 		returnValue := run()
 
